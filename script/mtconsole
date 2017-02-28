@@ -26,6 +26,8 @@ BEGIN {
         print "Cannot find MT_HOME directory\n";
         exit(1);
     }
+
+    print "MT_HOME: $mt_home\n";
 }
 
 use lib "$mt_home/lib", "$mt_home/extlib";

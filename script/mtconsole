@@ -1,0 +1,77 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use Cwd;
+use File::Basename;
+use File::Spec;
+
+use Config::INI::Reader::Ordered;
+use Reply;
+
+my $mt_home;
+
+BEGIN {
+    $mt_home = cwd();
+
+    # FIXME: for Windows
+    until (    File::Spec->catfile( $mt_home, 'mt-config.cgi' )
+            || $mt_home eq '/'
+            || $mt_home eq '' )
+    {
+        $mt_home = dirname($mt_home);
+    }
+    if ( $mt_home eq '/' || $mt_home eq '' ) {
+        print "Cannot find MT_HOME directory\n";
+        exit(1);
+    }
+}
+
+use lib "$mt_home/lib", "$mt_home/extlib";
+use MT;
+MT->instance;
+
+my $reply = Reply->new;
+
+my $config = join '', (<DATA>);
+$config =~ s/use 5.XXX/use $]/;
+my $data = Config::INI::Reader::Ordered->read_string($config);
+
+my $root_config;
+for my $section (@$data) {
+    my ( $name, $data ) = @$section;
+    if ( $name eq '_' ) {
+        $root_config = $data;
+    }
+    else {
+        $reply->_load_plugin( $name => $data );
+    }
+}
+
+for my $line ( sort grep {/^script_line/} keys %$root_config ) {
+    $reply->step( $root_config->{$line} );
+}
+
+$reply->run;
+
+__DATA__
+script_line1 = use strict
+script_line2 = use warnings
+script_line3 = use 5.XXX
+
+[Interrupt]
+[FancyPrompt]
+[DataDumper]
+[Colors]
+[ReadLine]
+[Hints]
+[Packages]
+[LexicalPersistence]
+[ResultCache]
+[Autocomplete::Packages]
+[Autocomplete::Lexicals]
+[Autocomplete::Functions]
+[Autocomplete::Globals]
+[Autocomplete::Methods]
+[Autocomplete::Commands]
+

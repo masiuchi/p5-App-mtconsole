@@ -79,4 +79,5 @@ script_line3 = use 5.XXX
 [Autocomplete::Globals]
 [Autocomplete::Methods]
 [Autocomplete::Commands]
+[LoadClass]
 
